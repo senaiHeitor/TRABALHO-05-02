@@ -1,0 +1,29 @@
+name: Notificar Falha de Build
+
+on:
+  workflow_run:
+    workflows: ["CI - Validação de Código"]
+    types:
+      - completed
+
+jobs:
+  notification:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    
+    steps:
+      - name: Notificar falha no Build
+        run: |
+          echo "❌ ALERTA: A pipeline CI falhou!"
+          echo "Workflow: ${{ github.event.workflow_run.name }}"
+          echo "Conclusão: ${{ github.event.workflow_run.conclusion }}"
+          echo "Acesse: https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"
+          
+      - name: Enviar notificação (Email mockado)
+        run: |
+          echo "📧 Simulando envio de email de notificação..."
+          echo "Para: developer@example.com"
+          echo "Assunto: ⚠️ Pipeline de Validação FALHOU"
+          echo ""
+          echo "A pipeline CI falhou em ${{ github.event.workflow_run.updated_at }}"
+          echo "Verifique os logs em: https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"

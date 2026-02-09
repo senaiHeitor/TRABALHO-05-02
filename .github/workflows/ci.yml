@@ -1,0 +1,57 @@
+name: CI - Validação de Código
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Verificar index.html na raiz
+        run: |
+          if [ ! -f index.html ]; then
+            echo "index.html não encontrado"
+            exit 1
+          fi
+
+      - name: Instalar validadores
+        run: |
+          npm install -g htmlhint linkinator
+
+      - name: Linter HTML
+        run: htmlhint index.html
+
+      - name: Bloquear arquivos > 500KB
+        run: |
+          if find . -type f -size +500k | grep .; then
+            echo "Arquivo maior que 500KB encontrado"
+            exit 1
+          fi
+
+      - name: Bloquear termos proibidos
+        run: |
+          if grep -R -i -E "TODO|FIXME|senha|password" . --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.github; then
+            echo "Termos proibidos encontrados"
+            exit 1
+          fi
+
+      - name: Validar links e imagens
+        run: linkinator index.html --recurse --silent
+
+      - name: ✅ Validação concluída com sucesso
+        run: echo "Pipeline CI passou em todas as validações!"
