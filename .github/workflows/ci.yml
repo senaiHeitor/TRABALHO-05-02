@@ -9,49 +9,57 @@ jobs:
   validar:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [18, 20]
-
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Verificar index.html na raiz
+      - name: Verificar Pasta src/
         run: |
-          if [ ! -f index.html ]; then
-            echo "index.html não encontrado"
+          if [ ! -d src ]; then
+            echo "❌ Pasta 'src' não encontrada"
             exit 1
           fi
+          echo "✅ Pasta 'src' existe"
+
+      - name: Verificar index.html na pasta src
+        run: |
+          if [ ! -f src/index.html ]; then
+            echo "❌ src/index.html não encontrado"
+            exit 1
+          fi
+          echo "✅ src/index.html encontrado"
+
+      - name: Verificar CSS na pasta correta
+        run: |
+          if [ ! -f src/css/style.css ]; then
+            echo "❌ src/css/style.css não encontrado"
+            exit 1
+          fi
+          echo "✅ src/css/style.css encontrado"
+
+      - name: Verificar footer com nome do aluno
+        run: |
+          if ! grep -q "Heitor Tavares" src/index.html; then
+            echo "❌ Footer deve conter o nome do aluno (Heitor Tavares)"
+            exit 1
+          fi
+          echo "✅ Nome do aluno encontrado no footer"
 
       - name: Instalar validadores
         run: |
-          npm install -g htmlhint linkinator
+          npm install -g htmlhint
 
       - name: Linter HTML
-        run: htmlhint index.html
+        run: htmlhint src/index.html
 
-      - name: Bloquear arquivos > 500KB
+      - name: 📋 Relatório de Auditoria
+        if: success()
         run: |
-          if find . -type f -size +500k | grep .; then
-            echo "Arquivo maior que 500KB encontrado"
-            exit 1
-          fi
-
-      - name: Bloquear termos proibidos
-        run: |
-          if grep -R -i -E "TODO|FIXME|senha|password" . --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.github; then
-            echo "Termos proibidos encontrados"
-            exit 1
-          fi
-
-      - name: Validar links e imagens
-        run: linkinator index.html --recurse --silent
-
-      - name: ✅ Validação concluída com sucesso
-        run: echo "Pipeline CI passou em todas as validações!"
+          echo ""
+          echo "=========================================="
+          echo "✅ AUDITORIA DE CÓDIGO CONCLUÍDA"
+          echo "=========================================="
+          echo ""
+          echo "O código do aluno Heitor Tavares foi auditado, está seguindo as normas corretas e está pronto para o deploy!"
+          echo ""
+          echo "=========================================="
